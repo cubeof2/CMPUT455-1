@@ -356,7 +356,10 @@ class GtpConnection:
         Modify this function for Assignment 1.
         Respond with the score for white, an space, and the score for black.
         """
-        self.respond("0 0")
+        black_score = self.board.capture_count(BLACK)
+        white_score = self.board.capture_count(WHITE)
+        response = str(black_score) + " " + str(white_score)
+        self.respond(response)
 
     """
     ==========================================================================
