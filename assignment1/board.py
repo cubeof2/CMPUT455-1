@@ -251,17 +251,19 @@ class GoBoard(object):
             self.last_move = point
             return True
 
-        # General case: deal with captures, suicide, and next ko point
-        opp_color = opponent(color)
+        # General case: deal with captures or 5-in-a-row
         self.board[point] = color
-        self._check_and_process_ninuki_capture(point, color)
+        self._check_ninuki(point, color)
         self.current_player = opponent(color)
         self.last2_move = self.last_move
         self.last_move = point
         return True
 
-    def _check_and_process_ninuki_capture(self, point: GO_POINT, color: GO_COLOR):
-        """Check if played move results in a capture, and executes if yes"""
+    def _check_ninuki(self, point: GO_POINT, color: GO_COLOR) -> bool:
+        """
+        Check if played move results in a capture, and executes if yes
+        Check if played move results in 5-in-a-row, and returns true if yes, false otherwise
+        """
 
         # define directions
         directions = [1,  # East
@@ -273,30 +275,37 @@ class GoBoard(object):
                       self.NS,  # North
                       self.NS + 1]  # Northeast
         # for each direction, look for "other, other, same" pattern and execute capture, ignore borders
+        five_in_a_row = False
         for direction in directions:
-            if self.board[point + direction] == opponent(color):
-                new_point_one = point + direction
-                if self.board[new_point_one] == BORDER:
-                    continue
-                if self.board[new_point_one + direction] == opponent(color):
-                    new_point_two = new_point_one + direction
-                    if self.board[new_point_two] == BORDER:
-                        continue
-                    if self.board[new_point_two + direction] == color:
-                        self.board[new_point_one] = EMPTY
-                        self.board[new_point_two] = EMPTY
+            first_point = point + direction
+            if self.board[first_point] == BORDER:  # ignore borders
+                continue
+            elif self.board[first_point] == opponent(color):  # potential capture
+                self._check_process_ninuki_capture(first_point, color, direction)
+            elif self._check_ninuki_five_in_a_row(first_point, color, direction):  # potential five-in-a-row
+                five_in_a_row = True
+        return five_in_a_row
+
+    def _check_process_ninuki_capture(self, first_point: GO_POINT, color: GO_COLOR, direction: int):
+        """Checks and processes a capture according to Ninuki rules by looking for other, other, same pattern"""
+        second_point = first_point + direction
+        third_point = second_point + direction
+        if self.board[second_point] == BORDER:
+            return
+        if self.board[second_point] == opponent(color):
+            if self.board[third_point] == BORDER:
+                return
+            if self.board[third_point] == color:
+                self.board[first_point] = EMPTY
+                self.board[second_point] = EMPTY
         return
 
-    def eight_way_neighbors_of_color(self, point: GO_POINT, color: GO_COLOR) -> List:
-        """List of Ninuki neighbors (all 8 neighbors)"""
-        eight_way_nbc: List[GO_POINT] = []
-        for nb in self._neighbors(point):
-            if self.get_color(nb) == color:
-                eight_way_nbc.append(nb)
-        for nb in self._diag_neighbors(point):
-            if self.get_color(nb) == color:
-                eight_way_nbc.append(nb)
-        return eight_way_nbc
+    def _check_ninuki_five_in_a_row(self, first_point: GO_POINT, color: GO_COLOR, direction: int) -> bool:
+        """Checks if a five-in-a-row is formed according to Ninuki rules by taking 4 more steps in the same direction"""
+        for step in range(4):
+            if self.board[first_point + direction * step] != color:
+                return False
+        return True
 
     def neighbors_of_color(self, point: GO_POINT, color: GO_COLOR) -> List:
         """ List of neighbors of point of given color """
