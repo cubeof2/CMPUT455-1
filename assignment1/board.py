@@ -298,6 +298,7 @@ class GoBoard(object):
             if self.board[third_point] == color:
                 self.board[first_point] = EMPTY
                 self.board[second_point] = EMPTY
+                self.capture_count[opponent(color)] += 2
         return
 
     def _check_ninuki_five_in_a_row(self, first_point: GO_POINT, color: GO_COLOR, direction: int) -> bool:
