@@ -66,6 +66,7 @@ class GoBoard(object):
         self.board: np.ndarray[GO_POINT] = np.full(self.maxpoint, BORDER, dtype=GO_POINT)
         self._initialize_empty_points(self.board)
         self.capture_count = {BLACK: 0, WHITE: 0}
+        self.five_in_a_row = False
 
     def copy(self) -> 'GoBoard':
         b = GoBoard(self.size)
@@ -119,12 +120,15 @@ class GoBoard(object):
         return can_play_move
 
     def end_of_game(self) -> bool:
-        # todo
         # this appears to be used nowhere??
-        # insert condition for row of 5 pieces
-        # insert condition for board completely full
-        if self.capture_count[self.current_player] >= 10:
+        if self.capture_count[self.current_player] >= 10:  # capture rule
             return True
+        if self.five_in_a_row:  # five-in-a-row rule
+            return True
+        if not self.get_empty_points():  # no empty points, so draw
+            return True
+        return False
+
 
     def get_empty_points(self) -> np.ndarray:
         """
@@ -240,7 +244,6 @@ class GoBoard(object):
         Play a move of color on point
         Returns whether move was legal
         """
-        # todo change to Ninuki rules
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
@@ -259,7 +262,7 @@ class GoBoard(object):
         self.last_move = point
         return True
 
-    def _check_ninuki(self, point: GO_POINT, color: GO_COLOR) -> bool:
+    def _check_ninuki(self, point: GO_POINT, color: GO_COLOR):
         """
         Check if played move results in a capture, and executes if yes
         Check if played move results in 5-in-a-row, and returns true if yes, false otherwise
@@ -274,8 +277,6 @@ class GoBoard(object):
                       self.NS - 1,  # Northwest
                       self.NS,  # North
                       self.NS + 1]  # Northeast
-        # for each direction, look for "other, other, same" pattern and execute capture, ignore borders
-        five_in_a_row = False
         for direction in directions:
             first_point = point + direction
             if self.board[first_point] == BORDER:  # ignore borders
@@ -283,8 +284,8 @@ class GoBoard(object):
             elif self.board[first_point] == opponent(color):  # potential capture
                 self._check_process_ninuki_capture(first_point, color, direction)
             elif self._check_ninuki_five_in_a_row(first_point, color, direction):  # potential five-in-a-row
-                five_in_a_row = True
-        return five_in_a_row
+                self.five_in_a_row = True
+        return
 
     def _check_process_ninuki_capture(self, first_point: GO_POINT, color: GO_COLOR, direction: int):
         """Checks and processes a capture according to Ninuki rules by looking for other, other, same pattern"""
