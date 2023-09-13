@@ -292,8 +292,10 @@ class GtpConnection:
         if self.board.end_of_game():
             if not self.board.get_empty_points().any():
                 self.respond("draw")
+            elif self.board.current_player == BLACK:  # flip colours since a play flips the color
+                self.respond("white")
             else:
-                self.respond(str(self.board.current_player).lower())
+                self.respond("black")
         else:
             self.respond("unknown")
 
@@ -356,8 +358,8 @@ class GtpConnection:
         Modify this function for Assignment 1.
         Respond with the score for white, an space, and the score for black.
         """
-        black_score = self.board.capture_count(BLACK)
-        white_score = self.board.capture_count(WHITE)
+        black_score = self.board.capture_count[BLACK]
+        white_score = self.board.capture_count[WHITE]
         response = str(black_score) + " " + str(white_score)
         self.respond(response)
 
