@@ -246,6 +246,12 @@ class GoBoard(object):
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
+
+        # Game is over
+        if self.end_of_game():
+            return False
+
+        # Pass move
         if point == PASS:
             self.ko_recapture = NO_POINT
             self.current_player = opponent(color)

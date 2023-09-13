@@ -301,7 +301,11 @@ class GtpConnection:
 
     def gogui_rules_legal_moves_cmd(self, args: List[str]) -> None:
         """ Return sorted list of legal moves, assume no args since all open spaces are legal"""
-        color: GO_COLOR = BLACK  # Ninuki has no suicide or ko so any open squares are legal
+        if self.board.end_of_game():
+            self.respond()
+            return
+
+        color: GO_COLOR = BLACK  # Ninuki has no suicide or ko so any open squares are legal if game is not over
         moves: List[GO_POINT] = GoBoardUtil.generate_legal_moves(self.board, color)
         gtp_moves: List[str] = []
         for move in moves:
