@@ -287,10 +287,18 @@ class GtpConnection:
     ==========================================================================
     """
     def gogui_rules_final_result_cmd(self, args: List[str]) -> None:
-        """ Implement this function for Assignment 1 """
-        self.respond("unknown")
+        """ Respond with board state: 'black' if black won, 'white' if white won, 'draw' if drawn,
+        'unknown' if unknown """
+        if self.board.end_of_game():
+            if not self.board.get_empty_points():
+                self.respond("draw")
+            else:
+                self.respond(str(self.board.current_player).lower())
+        else:
+            self.respond("unknown")
 
     def gogui_rules_legal_moves_cmd(self, args: List[str]) -> None:
+        """ Return sorted list of legal moves, assume no args since all open spaces are legal"""
         color: GO_COLOR = BLACK  # Ninuki has no suicide or ko so any open squares are legal
         moves: List[GO_POINT] = GoBoardUtil.generate_legal_moves(self.board, color)
         gtp_moves: List[str] = []
