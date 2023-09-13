@@ -1,9 +1,9 @@
 """
 board.py
 Cmput 455 sample code
-Written by Cmput 455 TA and Martin Mueller
+Written by Cmput 455 TA and Martin Mueller and edited by Alden Christianson and Thanh Nguyen
 
-Implements a basic Go board with functions to:
+Implements a basic Ninuki board with functions to:
 - initialize to a given board size
 - check if a move is legal
 - play a move
@@ -117,7 +117,6 @@ class GoBoard(object):
         return can_play_move
 
     def end_of_game(self) -> bool:
-        # todo
         return self.last_move == PASS \
            and self.last2_move == PASS
            
@@ -166,7 +165,6 @@ class GoBoard(object):
         check whether empty point is surrounded by stones of color
         (or BORDER) neighbors
         """
-        # todo
         for nb in self._neighbors(point):
             nb_color = self.board[nb]
             if nb_color != BORDER and nb_color != color:
@@ -178,7 +176,6 @@ class GoBoard(object):
         Check if the given block has any liberty.
         block is a numpy boolean array
         """
-        # todo
         for stone in where1d(block):
             empty_nbs = self.neighbors_of_color(stone, EMPTY)
             if empty_nbs:
@@ -235,7 +232,6 @@ class GoBoard(object):
         Play a move of color on point
         Returns whether move was legal
         """
-        # todo
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
