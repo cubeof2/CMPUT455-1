@@ -34,7 +34,7 @@ from board_base import (
 
 """
 The GoBoard class implements a board and basic functions to play
-moves, check the end of the game, and count the acore at the end.
+moves, check the end of the game, and count the score at the end.
 The class also contains basic utility functions for writing a Go player.
 For many more utility functions, see the GoBoardUtil class in board_util.py.
 
@@ -128,7 +128,6 @@ class GoBoard(object):
         if not self.get_empty_points():  # no empty points, so draw
             return True
         return False
-
 
     def get_empty_points(self) -> np.ndarray:
         """
