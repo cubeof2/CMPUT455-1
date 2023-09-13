@@ -290,7 +290,7 @@ class GtpConnection:
         """ Respond with board state: 'black' if black won, 'white' if white won, 'draw' if drawn,
         'unknown' if unknown """
         if self.board.end_of_game():
-            if not self.board.get_empty_points():
+            if not self.board.get_empty_points().any():
                 self.respond("draw")
             else:
                 self.respond(str(self.board.current_player).lower())

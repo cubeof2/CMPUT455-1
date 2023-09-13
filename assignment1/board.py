@@ -125,7 +125,7 @@ class GoBoard(object):
             return True
         if self.five_in_a_row:  # five-in-a-row rule
             return True
-        if not self.get_empty_points():  # no empty points, so draw
+        if not self.get_empty_points().any():  # no empty points, so draw
             return True
         return False
 
