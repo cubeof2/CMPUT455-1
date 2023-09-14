@@ -1,9 +1,9 @@
 """
 board.py
 Cmput 455 sample code
-Written by Cmput 455 TA and Martin Mueller
+Written by Cmput 455 TA and Martin Mueller and edited by Alden Christianson and Thanh Nguyen
 
-Implements a basic Go board with functions to:
+Implements a basic Ninuki board with functions to:
 - initialize to a given board size
 - check if a move is legal
 - play a move
@@ -32,17 +32,16 @@ from board_base import (
     GO_POINT,
 )
 
+
 """
 The GoBoard class implements a board and basic functions to play
-moves, check the end of the game, and count the score at the end.
+moves, check the end of the game, and count the acore at the end.
 The class also contains basic utility functions for writing a Go player.
 For many more utility functions, see the GoBoardUtil class in board_util.py.
 
 The board is stored as a one-dimensional array of GO_POINT in self.board.
 See coord_to_point for explanations of the array encoding.
 """
-
-
 class GoBoard(object):
     def __init__(self, size: int) -> None:
         """
@@ -65,8 +64,6 @@ class GoBoard(object):
         self.maxpoint: int = board_array_size(size)
         self.board: np.ndarray[GO_POINT] = np.full(self.maxpoint, BORDER, dtype=GO_POINT)
         self._initialize_empty_points(self.board)
-        self.capture_count = {BLACK: 0, WHITE: 0}
-        self.five_in_a_row = False
 
     def copy(self) -> 'GoBoard':
         b = GoBoard(self.size)
@@ -120,15 +117,9 @@ class GoBoard(object):
         return can_play_move
 
     def end_of_game(self) -> bool:
-        # this appears to be used nowhere??
-        if self.capture_count[self.current_player] >= 10:  # capture rule
-            return True
-        if self.five_in_a_row:  # five-in-a-row rule
-            return True
-        if not self.get_empty_points().any():  # no empty points, so draw
-            return True
-        return False
-
+        return self.last_move == PASS \
+           and self.last2_move == PASS
+           
     def get_empty_points(self) -> np.ndarray:
         """
         Return:
@@ -150,93 +141,91 @@ class GoBoard(object):
         """
         for row in range(1, self.size + 1):
             start: int = self.row_start(row)
-            board_array[start: start + self.size] = EMPTY
+            board_array[start : start + self.size] = EMPTY
 
-    # def is_eye(self, point: GO_POINT, color: GO_COLOR) -> bool:
-    #     """
-    #     Check if point is a simple eye for color
-    #     """
-    #     if not self._is_surrounded(point, color):
-    #         return False
-    #     # Eye-like shape. Check diagonals to detect false eye
-    #     opp_color = opponent(color)
-    #     false_count = 0
-    #     at_edge = 0
-    #     for d in self._diag_neighbors(point):
-    #         if self.board[d] == BORDER:
-    #             at_edge = 1
-    #         elif self.board[d] == opp_color:
-    #             false_count += 1
-    #     return false_count <= 1 - at_edge  # 0 at edge, 1 in center
+    def is_eye(self, point: GO_POINT, color: GO_COLOR) -> bool:
+        """
+        Check if point is a simple eye for color
+        """
+        if not self._is_surrounded(point, color):
+            return False
+        # Eye-like shape. Check diagonals to detect false eye
+        opp_color = opponent(color)
+        false_count = 0
+        at_edge = 0
+        for d in self._diag_neighbors(point):
+            if self.board[d] == BORDER:
+                at_edge = 1
+            elif self.board[d] == opp_color:
+                false_count += 1
+        return false_count <= 1 - at_edge  # 0 at edge, 1 in center
 
     def _is_surrounded(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """
         check whether empty point is surrounded by stones of color
         (or BORDER) neighbors
         """
-        # todo, but perhaps not needed
         for nb in self._neighbors(point):
             nb_color = self.board[nb]
             if nb_color != BORDER and nb_color != color:
                 return False
         return True
 
-    # def _has_liberty(self, block: np.ndarray) -> bool:
-    #     """
-    #     Check if the given block has any liberty.
-    #     block is a numpy boolean array
-    #     """
-    #     # todo, but perhaps not needed
-    #     for stone in where1d(block):
-    #         empty_nbs = self.neighbors_of_color(stone, EMPTY)
-    #         if empty_nbs:
-    #             return True
-    #     return False
+    def _has_liberty(self, block: np.ndarray) -> bool:
+        """
+        Check if the given block has any liberty.
+        block is a numpy boolean array
+        """
+        for stone in where1d(block):
+            empty_nbs = self.neighbors_of_color(stone, EMPTY)
+            if empty_nbs:
+                return True
+        return False
 
-    # def _block_of(self, stone: GO_POINT) -> np.ndarray:
-    #     """
-    #     Find the block of given stone
-    #     Returns a board of boolean markers which are set for
-    #     all the points in the block
-    #     """
-    #     color: GO_COLOR = self.get_color(stone)
-    #     assert is_black_white(color)
-    #     return self.connected_component(stone)
+    def _block_of(self, stone: GO_POINT) -> np.ndarray:
+        """
+        Find the block of given stone
+        Returns a board of boolean markers which are set for
+        all the points in the block 
+        """
+        color: GO_COLOR = self.get_color(stone)
+        assert is_black_white(color)
+        return self.connected_component(stone)
 
-    # def connected_component(self, point: GO_POINT) -> np.ndarray:
-    #     """
-    #     Find the connected component of the given point.
-    #     """
-    #     marker = np.full(self.maxpoint, False, dtype=np.bool_)
-    #     pointstack = [point]
-    #     color: GO_COLOR = self.get_color(point)
-    #     assert is_black_white_empty(color)
-    #     marker[point] = True
-    #     while pointstack:
-    #         p = pointstack.pop()
-    #         neighbors = self.neighbors_of_color(p, color)
-    #         for nb in neighbors:
-    #             if not marker[nb]:
-    #                 marker[nb] = True
-    #                 pointstack.append(nb)
-    #     return marker
+    def connected_component(self, point: GO_POINT) -> np.ndarray:
+        """
+        Find the connected component of the given point.
+        """
+        marker = np.full(self.maxpoint, False, dtype=np.bool_)
+        pointstack = [point]
+        color: GO_COLOR = self.get_color(point)
+        assert is_black_white_empty(color)
+        marker[point] = True
+        while pointstack:
+            p = pointstack.pop()
+            neighbors = self.neighbors_of_color(p, color)
+            for nb in neighbors:
+                if not marker[nb]:
+                    marker[nb] = True
+                    pointstack.append(nb)
+        return marker
 
-    # def _detect_and_process_capture(self, nb_point: GO_POINT) -> GO_POINT:
-    #     """
-    #     Check whether opponent block on nb_point is captured.
-    #     If yes, remove the stones.
-    #     Returns the stone if only a single stone was captured,
-    #     and returns NO_POINT otherwise.
-    #     This result is used in play_move to check for possible ko
-    #     """
-    #     single_capture: GO_POINT = NO_POINT
-    #     opp_block = self._block_of(nb_point)
-    #     if not self._has_liberty(opp_block):
-    #         captures = list(where1d(opp_block))
-    #         self.board[captures] = EMPTY
-    #         if len(captures) == 1:
-    #             single_capture = nb_point
-    #     return single_capture
+    def _detect_and_process_capture(self, nb_point: GO_POINT) -> GO_POINT:
+        """
+        Check whether opponent block on nb_point is captured.
+        If yes, remove the stones.
+        Returns the stone if only a single stone was captured,
+        and returns NO_POINT otherwise.
+        This result is used in play_move to check for possible ko
+        """
+        single_capture: GO_POINT = NO_POINT
+        opp_block = self._block_of(nb_point)
+        if not self._has_liberty(opp_block):
+            captures = list(where1d(opp_block))
+            self.board[captures] = EMPTY
+            if len(captures) == 1:
+                single_capture = nb_point
+        return single_capture
 
     def play_move(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """
@@ -246,12 +235,6 @@ class GoBoard(object):
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
-
-        # Game is over
-        if self.end_of_game():
-            return False
-
-        # Pass move
         if point == PASS:
             self.ko_recapture = NO_POINT
             self.current_player = opponent(color)
@@ -259,59 +242,27 @@ class GoBoard(object):
             self.last_move = point
             return True
 
-        # General case: deal with captures or 5-in-a-row
+        # General case: deal with captures, suicide, and next ko point
+        opp_color = opponent(color)
+        in_enemy_eye = self._is_surrounded(point, opp_color)
         self.board[point] = color
-        self._check_ninuki(point, color)
+        single_captures = []
+        neighbors = self._neighbors(point)
+        for nb in neighbors:
+            if self.board[nb] == opp_color:
+                single_capture = self._detect_and_process_capture(nb)
+                if single_capture != NO_POINT:
+                    single_captures.append(single_capture)
+        block = self._block_of(point)
+        if not self._has_liberty(block):  # undo suicide move
+            self.board[point] = EMPTY
+            return False
+        self.ko_recapture = NO_POINT
+        if in_enemy_eye and len(single_captures) == 1:
+            self.ko_recapture = single_captures[0]
         self.current_player = opponent(color)
         self.last2_move = self.last_move
         self.last_move = point
-        return True
-
-    def _check_ninuki(self, point: GO_POINT, color: GO_COLOR):
-        """
-        Check if played move results in a capture, and executes if yes
-        Check if played move results in 5-in-a-row, and returns true if yes, false otherwise
-        """
-
-        # define directions
-        directions = [1,  # East
-                      - self.NS + 1,  # Southeast
-                      - self.NS,  # South
-                      - self.NS - 1,  # Southwest
-                      - 1,  # West
-                      self.NS - 1,  # Northwest
-                      self.NS,  # North
-                      self.NS + 1]  # Northeast
-        for direction in directions:
-            first_point = point + direction
-            if self.board[first_point] == BORDER:  # ignore borders
-                continue
-            elif self.board[first_point] == opponent(color):  # potential capture
-                self._check_process_ninuki_capture(first_point, color, direction)
-            elif self._check_ninuki_five_in_a_row(first_point, color, direction):  # potential five-in-a-row
-                self.five_in_a_row = True
-        return
-
-    def _check_process_ninuki_capture(self, first_point: GO_POINT, color: GO_COLOR, direction: int):
-        """Checks and processes a capture according to Ninuki rules by looking for other, other, same pattern"""
-        second_point = first_point + direction
-        third_point = second_point + direction
-        if self.board[second_point] == BORDER:
-            return
-        if self.board[second_point] == opponent(color):
-            if self.board[third_point] == BORDER:
-                return
-            if self.board[third_point] == color:
-                self.board[first_point] = EMPTY
-                self.board[second_point] = EMPTY
-                self.capture_count[opponent(color)] += 2
-        return
-
-    def _check_ninuki_five_in_a_row(self, first_point: GO_POINT, color: GO_COLOR, direction: int) -> bool:
-        """Checks if a five-in-a-row is formed according to Ninuki rules by taking 4 more steps in the same direction"""
-        for step in range(4):
-            if self.board[first_point + direction * step] != color:
-                return False
         return True
 
     def neighbors_of_color(self, point: GO_POINT, color: GO_COLOR) -> List:

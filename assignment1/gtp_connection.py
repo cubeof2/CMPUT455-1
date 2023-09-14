@@ -287,12 +287,32 @@ class GtpConnection:
     ==========================================================================
     """
     def gogui_rules_final_result_cmd(self, args: List[str]) -> None:
-        """ Implement this function for Assignment 1 """
-        self.respond("unknown")
+        """ Respond with board state: 'black' if black won, 'white' if white won, 'draw' if drawn,
+        'unknown' if unknown """
+        if self.board.end_of_game():
+            if not self.board.get_empty_points().any():
+                self.respond("draw")
+            elif self.board.current_player == BLACK:  # flip colours since a play flips the color
+                self.respond("white")
+            else:
+                self.respond("black")
+        else:
+            self.respond("unknown")
 
     def gogui_rules_legal_moves_cmd(self, args: List[str]) -> None:
-        """ Implement this function for Assignment 1 """
-        self.respond()
+        """ Return sorted list of legal moves, assume no args since all open spaces are legal"""
+        if self.board.end_of_game():
+            self.respond()
+            return
+
+        color: GO_COLOR = BLACK  # Ninuki has no suicide or ko so any open squares are legal if game is not over
+        moves: List[GO_POINT] = GoBoardUtil.generate_legal_moves(self.board, color)
+        gtp_moves: List[str] = []
+        for move in moves:
+            coords: Tuple[int, int] = point_to_coord(move, self.board.size)
+            gtp_moves.append(format_point(coords))
+        sorted_moves = " ".join(sorted(gtp_moves))
+        self.respond(sorted_moves)
 
     def play_cmd(self, args: List[str]) -> None:
         """
@@ -331,7 +351,15 @@ class GtpConnection:
         move = self.go_engine.get_move(self.board, color)
         move_coord = point_to_coord(move, self.board.size)
         move_as_string = format_point(move_coord)
-        if self.board.is_legal(move, color):
+
+        # add end of game logic
+        if self.board.end_of_game():
+            if not self.board.get_empty_points().any():
+                self.respond("pass")
+            else:
+                self.respond("resign")
+
+        elif self.board.is_legal(move, color):
             self.board.play_move(move, color)
             self.respond(move_as_string)
         else:
@@ -342,7 +370,10 @@ class GtpConnection:
         Modify this function for Assignment 1.
         Respond with the score for white, an space, and the score for black.
         """
-        self.respond("0 0")
+        black_score = self.board.capture_count[BLACK]
+        white_score = self.board.capture_count[WHITE]
+        response = str(black_score) + " " + str(white_score)
+        self.respond(response)
 
     """
     ==========================================================================
