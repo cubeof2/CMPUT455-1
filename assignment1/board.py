@@ -277,7 +277,10 @@ class GoBoard(object):
         """if self._check_ninuki_five_in_a_row(point, color):
             self.five_in_a_row = True
          """   
-        # define directions
+        if self._check_ninuki_five_in_a_row(point, color):  # potential five-in-a-row
+            self.five_in_a_row = True
+            return
+        
         directions = [1,  # East
                       - self.NS + 1,  # Southeast
                       - self.NS,  # South
@@ -286,17 +289,13 @@ class GoBoard(object):
                       self.NS - 1,  # Northwest
                       self.NS,  # North
                       self.NS + 1]  # Northeast
-        if self._check_ninuki_five_in_a_row(point, color):  # potential five-in-a-row
-            self.five_in_a_row = True
-            return
         for direction in directions:
             first_point = point + direction
             if self.board[first_point] == BORDER:  # border
                 continue
             elif self.board[first_point] == opponent(color):  # potential capture
                 self._check_process_ninuki_capture(first_point, color, direction)
-            """elif self._check_ninuki_five_in_a_row(point, color):  # potential five-in-a-row
-                self.five_in_a_row = True"""
+            
         return
 
     def _check_process_ninuki_capture(self, first_point: GO_POINT, color: GO_COLOR, direction: int):
