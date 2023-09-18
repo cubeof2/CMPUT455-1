@@ -272,8 +272,13 @@ class GoBoard(object):
         Check if played move results in a capture, and executes if yes
         Check if played move results in 5-in-a-row, and returns true if yes, false otherwise
         """
-
-        # define directions
+        """if self._check_ninuki_five_in_a_row(point, color):
+            self.five_in_a_row = True
+         """   
+        if self._check_ninuki_five_in_a_row(point, color):  # potential five-in-a-row
+            self.five_in_a_row = True
+            return
+        
         directions = [1,  # East
                       - self.NS + 1,  # Southeast
                       - self.NS,  # South
@@ -284,12 +289,11 @@ class GoBoard(object):
                       self.NS + 1]  # Northeast
         for direction in directions:
             first_point = point + direction
-            if self.board[first_point] == BORDER:  # ignore borders
+            if self.board[first_point] == BORDER:  # border
                 continue
             elif self.board[first_point] == opponent(color):  # potential capture
                 self._check_process_ninuki_capture(first_point, color, direction)
-            elif self._check_ninuki_five_in_a_row(first_point, color, direction):  # potential five-in-a-row
-                self.five_in_a_row = True
+            
         return
 
     def _check_process_ninuki_capture(self, first_point: GO_POINT, color: GO_COLOR, direction: int):
@@ -307,12 +311,29 @@ class GoBoard(object):
                 self.capture_count[opponent(color)] += 2
         return
 
-    def _check_ninuki_five_in_a_row(self, first_point: GO_POINT, color: GO_COLOR, direction: int) -> bool:
+    def _check_ninuki_five_in_a_row(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """Checks if a five-in-a-row is formed according to Ninuki rules by taking 4 more steps in the same direction"""
-        for step in range(4):
+        """for step in range(4):
             if self.board[first_point + direction * step] != color:
                 return False
-        return True
+        return True"""
+        north_south = [self.NS, -self.NS]
+        east_west = [1, -1]
+        ne_sw = [self.NS + 1, -self.NS - 1]
+        nw_se = [self.NS - 1, -self.NS + 1]
+        
+        axes = [north_south, east_west, ne_sw, nw_se]
+       
+        for axis in axes:
+            count = 1
+            for direction in axis:
+                current = point
+                while self.board[current + direction] == color and count <= 5:
+                    current += direction
+                    count += 1
+            if count >= 5:
+                return True
+        return False
 
     def neighbors_of_color(self, point: GO_POINT, color: GO_COLOR) -> List:
         """ List of neighbors of point of given color """
