@@ -322,14 +322,14 @@ class GoBoard(object):
         ne_sw = [self.NS + 1, -self.NS - 1]
         nw_se = [self.NS - 1, -self.NS + 1]
         
-        directions = [north_south, east_west, ne_sw, nw_se]
+        axes = [north_south, east_west, ne_sw, nw_se]
        
-        for direction in directions:
+        for axis in axes:
             count = 1
-            for d in direction:
+            for direction in axis:
                 current = point
-                while self.board[current + d] == color and count <= 5:
-                    current += d
+                while self.board[current + direction] == color and count <= 5:
+                    current += direction
                     count += 1
             if count >= 5:
                 return True
